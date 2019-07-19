@@ -12,7 +12,7 @@ single_word_entities = ['monday','tuesday','wednesday','thursday','friday','satu
 		
 class DataHandler(object):
 
-	def __init__(self,emb_dim,batch_size,train_path,val_path,test_path,vocab_path):
+	def __init__(self,emb_dim,batch_size,train_path,val_path,test_path,vocab_path,glove_path):
 
 		self.batch_size = batch_size
 		self.train_path = train_path
@@ -21,6 +21,7 @@ class DataHandler(object):
 		self.test_path = test_path
 		self.vocab_path = vocab_path
 		self.emb_dim = emb_dim
+		self.glove_path = glove_path
 
 		self.vocab = self.load_vocab()
 		self.input_vocab_size = self.vocab['input_vocab_size']
@@ -59,7 +60,7 @@ class DataHandler(object):
 
 	def load_glove_vectors(self):
 		logging.info("Loading pre-trained Word Embeddings")
-		filename = "../data/glove.6B.200d.txt"
+		filename = self.glove_path + "glove.6B.200d.txt"
 		glove = {}
 		file = open(filename,'r')
 		for line in file.readlines():

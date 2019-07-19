@@ -4,7 +4,7 @@ from tensorflow.python.ops import embedding_ops, array_ops, math_ops, tensor_arr
 
 class DialogueModel(object):
 
-	def __init__(self,device,batch_size,inp_vocab_size,out_vocab_size,generate_size,emb_init,emb_dim,enc_hid_dim,dec_hid_dim,attn_size,dropout_keep_prob):
+	def __init__(self,device,batch_size,inp_vocab_size,out_vocab_size,generate_size,emb_init,emb_dim,enc_hid_dim,dec_hid_dim,attn_size):
 
 		self.device = device
 		self.batch_size = batch_size
@@ -17,7 +17,6 @@ class DialogueModel(object):
 		self.dec_hid_dim = dec_hid_dim
 		self.attn_size = attn_size
 		self.generate_size = generate_size
-		self.dropout_keep_prob = dropout_keep_prob
 
 		self.inp_utt = tf.placeholder(
 			name='inp_utt', dtype=tf.int64,
