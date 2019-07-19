@@ -57,6 +57,8 @@ class Trainer(object):
 
 		logging.info("Training the model")
 
+		best_f1 = 0.0
+
 		while curEpoch <= self.epochs:
 			step = step + 1
 
@@ -109,11 +111,13 @@ class Trainer(object):
 				logging.info(outstr)
 				outstr = "Val-info: "+"Epoch "+str(curEpoch)+" Loss: "+str(valLoss)
 				logging.info(outstr)
-				if curEpoch > 3:
-					self.evaluate(needed,self.handler.vocab)
+				if curEpoch > 2:
+					current_f1 = self.evaluate(needed,self.handler.vocab)
+					if current_f1 >= best_f1:
+						best_f1 = current_f1
+						self.saver.save(self.sess, os.path.join(self.ckpt_path, 'model'), global_step=curEpoch)
 
 				epochLoss = []				
-				self.saver.save(self.sess, os.path.join(self.ckpt_path, 'model'), global_step=curEpoch)
 				curEpoch = curEpoch + 1
 
 	def score(self,parallel_corpus):
@@ -236,6 +240,7 @@ class Trainer(object):
 			f1 = 0.0
 		else:
 			f1 = 2*prec*recall/(prec+recall)
+		overall_f1 = f1
 		print "Bleu: %.3f, Prec: %.3f, Recall: %.3f, F1: %.3f" % (self.score(zip(wrap_generated, wrap_truth)),prec,recall,f1)
 		for domain in ['schedule','navigate','weather']:
 			prec = domain_wise[domain]['tp_prec']/domain_wise[domain]['total_prec']
@@ -247,7 +252,8 @@ class Trainer(object):
 			wrap_generated = [[_] for _ in domain_wise[domain]['output']]
 			wrap_truth = [[_] for _ in domain_wise[domain]['gold']]
 			print "Domain: " + str(domain) + ", Bleu: %.3f, F1: %.3f" % (self.score(zip(wrap_generated, wrap_truth)),f1)
-	
+		return overall_f1
+
 	def test(self):
 		test_epoch_done = False
 
@@ -291,51 +297,55 @@ class Trainer(object):
 
 def main():
 
-	BATCH_SIZE = 16
-	EMB_DIM = 200
-	ENC_HID_DIM = 128
-	DEC_HID_DIM = 256
-	ATTN_SIZE = 200
-	NUM_EPOCHS = 25
-	DROPOUT = 0.75
-	LR = 2.5e-4
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--batch_size', type=int, default=16)
+	parser.add_argument('--emb_dim', type=int, default=200)
+	parser.add_argument('--enc_hid_dim', type=int, default=128)
+	parser.add_argument('--dec_hid_dim', type=int, default=256)
+	parser.add_argument('--attn_size', type=int, default=200)
+	parser.add_argument('--epochs', type=int, default=25)
+	parser.add_argument('--learning_rate', type=float, default=2.5e-4)
+	parser.add_argument('--dataset_path', type=str, default='../data/InCar/')
+	parser.add_argument('--glove_path', type=str, default='../data/')
+	parser.add_argument('--checkpoint', type=str, default="./trainDir/")
+	config = parser.parse_args()
+
 	DEVICE = "/gpu:0"
 
 	logging.info("Loading Data")
 
 	handler = DataHandler(
-				emb_dim = EMB_DIM,
-				batch_size = BATCH_SIZE,
-				train_path = "../data/Incar/train.json",
-				val_path = "../data/Incar/val.json",
-				test_path = "../data/Incar/test.json",
-				vocab_path = "./vocab.json")
+				emb_dim = config.emb_dim,
+				batch_size = config.batch_size,
+				train_path = config.dataset_path + "train.json",
+				val_path = config.dataset_path + "val.json",
+				test_path = config.dataset_path + "test.json",
+				vocab_path = "./vocab.json",
+				glove_path = config.glove_path)
 
 	logging.info("Loading Architecture")
 
 	model = DialogueModel(
 				device = DEVICE,
-				batch_size = BATCH_SIZE,
+				batch_size = config.batch_size,
 				inp_vocab_size = handler.input_vocab_size,
 				out_vocab_size = handler.output_vocab_size,
 				generate_size = handler.generate_vocab_size,
 				emb_init = handler.emb_init,
-				emb_dim = EMB_DIM,
-				enc_hid_dim = ENC_HID_DIM,
-				dec_hid_dim = DEC_HID_DIM,
-				attn_size = ATTN_SIZE,
-				dropout_keep_prob = DROPOUT)
+				emb_dim = config.emb_dim,
+				enc_hid_dim = config.enc_hid_dim,
+				dec_hid_dim = config.dec_hid_dim,
+				attn_size = config.attn_size)
 
 	logging.info("Loading Trainer")
 
 	trainer = Trainer(
 				model=model,
 				handler=handler,
-				ckpt_path="./trainDir/",
-				num_epochs=NUM_EPOCHS,
-				learning_rate = LR)
+				ckpt_path=config.checkpoint,
+				num_epochs=config.epochs,
+				learning_rate = config.learning_rate)
 
 	trainer.trainData()
-	#trainer.test()
 
 main()

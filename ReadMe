@@ -1,0 +1,20 @@
+This folder contains the data used in experiments for the paper.
+
+It contains processed data for the following publicly available datasets:
+
+1) Incar : https://nlp.stanford.edu/blog/a-new-multi-turn-multi-domain-task-oriented-dialogue-dataset/
+
+2) CamRest : https://www.repository.cam.ac.uk/handle/1810/260970
+
+3) Maluuba Frames : https://datasets.maluuba.com/Frames
+
+Each sub-folder contains the train, validation and test split of the dataset.
+Each data sample contains the following:
+
+1) Dialog context
+2) Gold response
+3) KB queries (if any)
+4) KB results corresponding to the queries.
+
+Before running the code, you will need to download the Glove vectors into the "data" folder.
+Download the 200 dimensional vectors and name the file: glove.6B.200d.txt
